@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>求是1966视频分享</title>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --bg:#f5f5f7;
+    --card:#ffffff;
+    --card-shadow:0 4px 24px rgba(0,0,0,0.06);
+    --card-hover-shadow:0 12px 40px rgba(0,0,0,0.12);
+    --text-primary:#1d1d1f;
+    --text-secondary:#86868b;
+    --border:rgba(0,0,0,0.08);
+    --accent:#1d1d1f;
+    --accent-hover:#000;
+    --toggle-bg:#e5e5ea;
+    --toggle-knob:#fff;
+  }
+
+  [data-theme="dark"]{
+    --bg:#0a0a0a;
+    --card:#1c1c1e;
+    --card-shadow:0 4px 24px rgba(0,0,0,0.3);
+    --card-hover-shadow:0 12px 40px rgba(0,0,0,0.5);
+    --text-primary:#f5f5f7;
+    --text-secondary:#98989d;
+    --border:rgba(255,255,255,0.1);
+    --accent:#f5f5f7;
+    --accent-hover:#fff;
+    --toggle-bg:#3a3a3c;
+    --toggle-knob:#f5f5f7;
+  }
+
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','PingFang SC','Helvetica Neue','Segoe UI',sans-serif;
+    background:var(--bg);
+    color:var(--text-primary);
+    min-height:100vh;
+    transition:background 0.5s cubic-bezier(0.4,0,0.2,1),color 0.5s cubic-bezier(0.4,0,0.2,1);
+    overflow-x:hidden;
+  }
+
+  .header{
+    text-align:center;
+    padding:60px 20px 40px;
+  }
+  .header h1{
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','PingFang SC','Helvetica Neue',sans-serif;
+    font-size:clamp(2.2rem,6vw,3.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    color:var(--text-primary);
+    text-shadow:0 2px 8px rgba(0,0,0,0.08),0 4px 20px rgba(0,0,0,0.04);
+    opacity:0;
+    transform:translateY(30px);
+    animation:fadeUp 0.8s 0.1s forwards cubic-bezier(0.22,1,0.36,1);
+  }
+  [data-theme="dark"] .header h1{
+    text-shadow:0 2px 12px rgba(255,255,255,0.06),0 4px 24px rgba(255,255,255,0.03);
+  }
+  .header .line{
+    width:60px;height:3px;
+    background:var(--text-primary);
+    margin:16px auto 0;
+    border-radius:2px;
+    opacity:0;
+    transform:scaleX(0);
+    animation:lineGrow 0.6s 0.5s forwards cubic-bezier(0.22,1,0.36,1);
+  }
+
+  @keyframes fadeUp{ to{opacity:1;transform:translateY(0)} }
+  @keyframes lineGrow{ to{opacity:1;transform:scaleX(1)} }
+
+  .container{
+    max-width:900px;
+    margin:0 auto;
+    padding:0 20px 100px;
+  }
+  .video-grid{
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+  }
+
+  .video-card{
+    background:var(--card);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:var(--card-shadow);
+    border:1px solid var(--border);
+    transition:box-shadow 0.4s ease,transform 0.4s ease;
+    opacity:0;
+    transform:translateY(40px);
+  }
+  .video-card.visible{
+    opacity:1;
+    transform:translateY(0);
+    transition:opacity 0.7s cubic-bezier(0.22,1,0.36,1),transform 0.7s cubic-bezier(0.22,1,0.36,1),box-shadow 0.4s ease;
+  }
+  .video-card:hover{
+    box-shadow:var(--card-hover-shadow);
+    transform:translateY(-3px);
+  }
+
+  .video-preview{
+    position:relative;
+    width:100%;
+    padding-top:56.25%;
+    background:#111;
+    cursor:pointer;
+    overflow:hidden;
+  }
+  .video-preview img.poster{
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    transition:transform 0.6s ease;
+  }
+  .video-card:hover .video-preview img.poster{
+    transform:scale(1.03);
+  }
+
+  .play-overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,0.08);
+    transition:background 0.3s ease;
+  }
+  .video-card:hover .play-overlay{
+    background:rgba(0,0,0,0.3);
+  }
+
+  .play-btn{
+    width:68px;height:68px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),background 0.3s ease;
+    box-shadow:0 6px 24px rgba(0,0,0,0.2);
+  }
+  .play-btn svg{
+    width:26px;height:26px;
+    fill:#1d1d1f;
+    margin-left:3px;
+  }
+  .video-card:hover .play-btn{
+    transform:scale(1.12);
+    background:#fff;
+  }
+
+  .card-actions{
+    display:flex;
+    justify-content:center;
+    padding:14px 20px;
+  }
+
+  .btn-download{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 28px;
+    background:var(--text-primary);
+    color:var(--bg);
+    border:none;
+    border-radius:10px;
+    font-size:0.9rem;
+    font-weight:500;
+    cursor:pointer;
+    transition:all 0.3s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-download:hover{
+    background:var(--accent-hover);
+    transform:translateY(-1px);
+    box-shadow:0 4px 16px rgba(0,0,0,0.12);
+  }
+  .btn-download:active{
+    transform:scale(0.97);
+  }
+  .btn-download:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+    transform:none;
+  }
+  .btn-download svg{
+    width:18px;height:18px;
+    fill:currentColor;
+    flex-shrink:0;
+  }
+  .btn-download .dl-spinner{
+    width:16px;height:16px;
+    border:2px solid currentColor;
+    border-top-color:transparent;
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+    display:none;
+    flex-shrink:0;
+  }
+  .btn-download.loading .dl-spinner{display:block}
+  .btn-download.loading svg{display:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .lightbox{
+    position:fixed;
+    inset:0;
+    z-index:2000;
+    background:rgba(0,0,0,0.92);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.35s ease;
+  }
+  .lightbox.active{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .lightbox-inner{
+    width:90vw;
+    max-width:1100px;
+    position:relative;
+    transform:scale(0.9);
+    transition:transform 0.35s cubic-bezier(0.22,1,0.36,1);
+  }
+  .lightbox.active .lightbox-inner{
+    transform:scale(1);
+  }
+  .lightbox video{
+    width:100%;
+    border-radius:12px;
+    display:block;
+  }
+  .lightbox-close{
+    position:absolute;
+    top:-48px;right:0;
+    width:40px;height:40px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.15);
+    border:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background 0.3s ease;
+  }
+  .lightbox-close:hover{
+    background:rgba(255,255,255,0.3);
+  }
+  .lightbox-close svg{
+    width:20px;height:20px;
+    fill:#fff;
+  }
+
+  .theme-toggle{
+    position:fixed;
+    bottom:28px;left:28px;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:50px;
+    padding:8px 16px 8px 12px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.1);
+    cursor:pointer;
+    transition:all 0.4s ease;
+    user-select:none;
+  }
+  .theme-toggle:hover{
+    transform:scale(1.05);
+    box-shadow:0 6px 28px rgba(0,0,0,0.15);
+  }
+  .toggle-track{
+    position:relative;
+    width:44px;height:24px;
+    background:var(--toggle-bg);
+    border-radius:12px;
+    transition:background 0.4s ease;
+    flex-shrink:0;
+  }
+  .toggle-knob{
+    position:absolute;
+    top:2px;left:2px;
+    width:20px;height:20px;
+    background:var(--toggle-knob);
+    border-radius:50%;
+    transition:transform 0.4s cubic-bezier(0.68,-0.55,0.27,1.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .toggle-knob svg{
+    width:12px;height:12px;
+    fill:var(--text-primary);
+  }
+  [data-theme="dark"] .toggle-knob{
+    transform:translateX(20px);
+  }
+  .toggle-label{
+    font-size:0.8rem;
+    font-weight:500;
+    color:var(--text-secondary);
+  }
+
+  .back-top{
+    position:fixed;
+    bottom:28px;right:28px;
+    width:44px;height:44px;
+    border-radius:50%;
+    background:var(--card);
+    border:1px solid var(--border);
+    box-shadow:0 4px 20px rgba(0,0,0,0.1);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    opacity:0;
+    transform:translateY(20px);
+    transition:opacity 0.3s ease,transform 0.3s ease,background 0.4s ease;
+    z-index:999;
+  }
+  .back-top.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+  .back-top:hover{
+    background:var(--text-primary);
+    border-color:var(--text-primary);
+  }
+  .back-top:hover svg{
+    fill:var(--bg);
+  }
+  .back-top svg{
+    width:20px;height:20px;
+    fill:var(--text-primary);
+    transition:fill 0.3s ease;
+  }
+
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--text-secondary);border-radius:4px}
+
+  @media(max-width:640px){
+    .header{padding:48px 16px 32px}
+    .container{padding:0 12px 80px}
+    .video-grid{gap:20px}
+    .play-btn{width:54px;height:54px}
+    .play-btn svg{width:22px;height:22px}
+    .theme-toggle{bottom:16px;left:16px;padding:6px 12px 6px 10px}
+    .back-top{bottom:16px;right:16px}
+    .lightbox-inner{width:95vw}
+    .lightbox-close{top:-44px}
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>求是1966视频分享</h1>
+  <div class="line"></div>
+</header>
+
+<main class="container">
+  <div class="video-grid" id="videoGrid"></div>
+</main>
+
+<div class="theme-toggle" id="themeToggle" role="button" tabindex="0" aria-label="切换深色/亮色模式">
+  <div class="toggle-track">
+    <div class="toggle-knob" id="toggleKnob">
+      <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8C13.06 3.04 12.54 3 12 3z"/></svg>
+    </div>
+  </div>
+  <span class="toggle-label" id="toggleLabel">深色</span>
+</div>
+
+<div class="back-top" id="backTop" role="button" tabindex="0" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" id="lightboxClose" aria-label="关闭">
+      <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </button>
+    <video id="lightboxVideo" controls playsinline></video>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ===== Sound Engine =====
+  let audioCtx = null;
+  function ensureAudio(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  function playTone(freq, duration, volume){
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+  function playClick(){ playTone(1300, 0.032, 0.028); }
+  function playDownload(){ playTone(1150, 0.042, 0.028); }
+  function playToggle(){ playTone(1050, 0.028, 0.022); setTimeout(()=>playTone(1350, 0.035, 0.025), 50); }
+  function playClose(){ playTone(1500, 0.025, 0.022); }
+  function playTop(){ playTone(1250, 0.030, 0.018); }
+
+  // ===== Video List =====
+  const videos = [
+    'videos/01.mp4','videos/02.mp4','videos/03.mp4','videos/04.mp4',
+    'videos/06.mp4','videos/07.mp4','videos/08.mp4','videos/09.mp4',
+    'videos/10.mp4','videos/11.mp4','videos/14.mp4','videos/15.mp4',
+    'videos/16.mp4','videos/17.mp4','videos/18.mp4','videos/19.mp4',
+    'videos/20.mp4','videos/21.mp4','videos/23.mp4','videos/24.mp4',
+    'videos/25.mp4','videos/26.mp4','videos/52.mp4','videos/69.mp4',
+    'videos/70.mp4','videos/73.mp4'
+  ];
+
+  // Poster path helper: videos/01.mp4 -> posters/01.jpg
+  function posterFor(videoSrc){
+    return 'posters/' + videoSrc.replace('videos/','').replace('.mp4','.jpg');
+  }
+
+  const grid = document.getElementById('videoGrid');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxVideo = document.getElementById('lightboxVideo');
+  const lightboxClose = document.getElementById('lightboxClose');
+
+  // Build cards
+  videos.forEach((src, i) => {
+    const card = document.createElement('div');
+    card.className = 'video-card';
+    card.style.transitionDelay = (Math.min(i, 5) * 0.08) + 's';
+    card.innerHTML = `
+      <div class="video-preview" data-src="${src}">
+        <img class="poster" src="${posterFor(src)}" alt="" loading="lazy">
+        <div class="play-overlay">
+          <div class="play-btn">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-download" data-video="${src}">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <span class="dl-spinner"></span>
+          下载视频
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Open lightbox
+  grid.addEventListener('click', e => {
+    const preview = e.target.closest('.video-preview');
+    if (!preview) return;
+    playClick();
+    const src = preview.dataset.src;
+    lightboxVideo.src = src;
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    const onCanPlay = ()=>{
+      lightboxVideo.play().catch(()=>{});
+      lightboxVideo.removeEventListener('canplay', onCanPlay);
+    };
+    lightboxVideo.addEventListener('canplay', onCanPlay);
+    setTimeout(()=>{ lightboxVideo.play().catch(()=>{}); }, 500);
+  });
+
+  // Close lightbox
+  function closeLightbox(){
+    // Exit fullscreen first so user always returns to page
+    const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+    if (fsEl) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+      if (exit) exit.call(document).catch(()=>{});
+    }
+    playClose();
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+    lightboxVideo.pause();
+    lightboxVideo.removeAttribute('src');
+    lightboxVideo.load();
+  }
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => {
+    if (e.target === lightbox) closeLightbox();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+      // If video is in fullscreen, browser handles ESC to exit fullscreen first.
+      // On second ESC (or if not fullscreen), we close the lightbox.
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+      if (!fsEl) closeLightbox();
+    }
+  });
+
+  // Download handler (XHR + Blob for reliable download on both file:// and http)
+  document.querySelectorAll('.btn-download').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (btn.disabled) return;
+      playDownload();
+      const src = btn.dataset.video;
+      const filename = src.split('/').pop();
+      btn.disabled = true;
+      btn.classList.add('loading');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', src, true);
+      xhr.responseType = 'blob';
+      xhr.onload = function(){
+        if (xhr.status === 200 || xhr.status === 0) {
+          const blob = xhr.response;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        } else {
+          window.open(src, '_blank');
+        }
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      };
+      xhr.onerror = function(){
+        window.open(src, '_blank');
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      };
+      xhr.send();
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+  document.querySelectorAll('.video-card').forEach(c => observer.observe(c));
+
+  // Theme Toggle
+  const html = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const label = document.getElementById('toggleLabel');
+
+  function setTheme(dark){
+    html.setAttribute('data-theme', dark ? 'dark' : 'light');
+    label.textContent = dark ? '亮色' : '深色';
+    try{ localStorage.setItem('theme', dark ? 'dark' : 'light'); }catch(e){}
+  }
+
+  const saved = (()=>{ try{ return localStorage.getItem('theme'); }catch(e){ return null; } })();
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme:dark)').matches)){
+    setTheme(true);
+  } else {
+    setTheme(false);
+  }
+
+  toggle.addEventListener('click', ()=>{
+    playToggle();
+    setTheme(html.getAttribute('data-theme') !== 'dark');
+  });
+  toggle.addEventListener('keydown', e=>{
+    if (e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle.click(); }
+  });
+
+  // Back to Top
+  const backTop = document.getElementById('backTop');
+  window.addEventListener('scroll', ()=>{
+    backTop.classList.toggle('show', window.scrollY > 400);
+  }, { passive: true });
+
+  backTop.addEventListener('click', ()=>{
+    playTop();
+    const startY = window.scrollY;
+    const duration = 800;
+    const startTime = performance.now();
+    function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+    function step(now){
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutCubic(progress);
+      window.scrollTo(0, startY * (1 - eased));
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+
+  backTop.addEventListener('keydown', e=>{
+    if (e.key==='Enter'||e.key===' '){ e.preventDefault(); backTop.click(); }
+  });
+})();
+</script>
+</body>
+</html>
